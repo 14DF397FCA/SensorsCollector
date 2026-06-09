@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include "espnow.h"
 #include "sensors.h"
+#include "lights.h"
 #include "data.h"
 
 const bool verbose = false;
@@ -48,30 +49,6 @@ LightSwitch lightSwitch = {
 constexpr uint16_t updateInterval = 100;
 static uint64_t lastUpdate = 0;
 
-void ledSetup() {
-    pinMode(14,OUTPUT);
-    pinMode(26,OUTPUT);
-    pinMode(33,OUTPUT);
-    pinMode(32,OUTPUT);
-}
-
-void ledBlink() {
-    if (verbose) {
-        Serial.printf("f:l: %d\n", lightSwitch.frontLeft);
-        Serial.printf("f:r: %d\n", lightSwitch.frontRight);
-        Serial.printf("h:l: %d\n", lightSwitch.headLeft);
-        Serial.printf("h:r: %d\n", lightSwitch.headRight);
-        Serial.printf("upd: %d\n", lightSwitch.updated);
-    }
-    if (lightSwitch.updated) {
-        digitalWrite(14, lightSwitch.frontLeft);
-        digitalWrite(32, lightSwitch.frontRight);
-        digitalWrite(33, lightSwitch.headLeft);
-        digitalWrite(26, lightSwitch.headRight);
-        lightSwitch.updated = false;
-    }
-}
-
 void setup() {
     Serial.begin(115200);
 
@@ -87,16 +64,13 @@ void setup() {
     delay(1000);
 
     SetupEspNow();
-    ledSetup();
+    setupLights();
 }
 
 void loop() {
-    if (sensorsCount > 0) {
-        if (millis() - lastUpdate > updateInterval) {
+    if (millis() - lastUpdate > updateInterval) {
+        if (sensorsCount > 0) {
             sensors.requestTemperatures();
-
-            ledBlink();
-
             if (sendData) {
                 espSend(collectTemp());
             }
@@ -104,10 +78,11 @@ void loop() {
             if (showAddresses) {
                 showAllDevices();
             }
-
             lastUpdate = millis();
+        } else {
+            Serial.println("No sensors found");
         }
-    } else {
-        Serial.println("No sensors found");
+
+        turnLights();
     }
 }
