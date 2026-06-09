@@ -20,7 +20,16 @@ typedef struct Sensor {
     DeviceAddress address;
 } Sensor;
 
+typedef struct LightSwitch {
+    bool frontRight;
+    bool frontLeft;
+    bool headRight;
+    bool headLeft;
+    bool updated;
+} LightSwitch;
+
 extern const bool verbose;
 extern const bool showAddresses;
+extern LightSwitch lightSwitch;
 
 #endif //SENSORSCOLLECTOR_DATA_H

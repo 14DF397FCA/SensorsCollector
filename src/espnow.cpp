@@ -14,10 +14,10 @@
 //  JC4827W543C
 uint8_t broadcastAddress[] = {0x1C, 0xDB, 0xD4, 0x9B, 0x1C, 0xBC};
 
-
 void SetupEspNow() {
     // Устанавливаем режим Wi-Fi
     WiFi.mode(WIFI_STA);
+    WiFi.disconnect();
 
     //    Ждём поднятия WiFi
     uint32_t timeout = millis();
@@ -41,6 +41,7 @@ void SetupEspNow() {
 
     // Регистрируем callback
     esp_now_register_send_cb(OnDataSent);
+    esp_now_register_recv_cb(OnDataRecv);
 
     // Добавляем broadcast peer
     esp_now_peer_info_t peerInfo;
@@ -65,6 +66,21 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
     }
     Serial.printf(" at %d | Status: ", millis());
     Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Success ✓" : "Fail ✗");
+}
+
+void OnDataRecv(const esp_now_recv_info_t *recv_info, const uint8_t *data, int data_len) {
+    const uint8_t *mac_addr = recv_info->src_addr;
+
+    memcpy(&lightSwitch, data, sizeof(LightSwitch));
+
+    // if (verbose) {
+        Serial.printf("Received %d bytes from MAC: ", data_len);
+        for (int i = 0; i < 6; i++) {
+            Serial.print(mac_addr[i], HEX);
+            if (i < 5)
+                Serial.print(":");
+        }
+        Serial.println("");
 }
 
 esp_err_t espSend(IntercoolerTemp data) {
